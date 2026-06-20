@@ -8,10 +8,11 @@ from langgraph.graph import StateGraph
 from langchain_postgres import PGVector
 from app import dependencies
 from app.agents.node import chat_node
-from app.config.constants import DB_URI
+from app.config.constants import DB_URI, COLLECTION_NAME
 from app.config.llm import embeddings_llm
 from app.models.schema import ChatState
 from app.routers.chat import router as chat_router
+from app.config.logger import logger
 from contextlib import asynccontextmanager
 
 checkpointer: Optional[PostgresSaver] = None
@@ -28,18 +29,17 @@ async def lifespan(app: FastAPI):
         graph.add_edge(START, 'chat_node')
         graph.add_edge('chat_node', END)
         dependencies.workflow = graph.compile(checkpointer=checkpointer)
-
         try:
             dependencies.vectorstore = PGVector(
                 connection=DB_URI,
                 embeddings=embeddings_llm,
-                collection_name="documents"
+                collection_name=COLLECTION_NAME
             )
             dependencies.retriever = dependencies.vectorstore.as_retriever()
-            print("Vector DB ready")
+            logger.info("Vector DB ready")
         except Exception as e:
             dependencies.retriever = None
-            print(f"No existing vector DB, skipping: {e}")
+            logger.error(f"No existing vector DB, skipping: {e}")
 
         yield
         # PostgresSaver cleans up automatically when 'with' block exits here
