@@ -4,11 +4,10 @@ from fastapi import APIRouter, HTTPException, UploadFile, File
 from uuid import uuid4
 
 from langchain_core.messages import HumanMessage
-from app.agents.graph import workflow
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from app.utils.helper import load_documents
 
 router = APIRouter()
-
-
 
 
 @router.post("/chat")
@@ -20,7 +19,9 @@ async def chat(message: str, conversation_id: Optional[str] = None):
             'messages': [HumanMessage(content=message)]
         }
         config = {"configurable": {"thread_id": conversation_id}}
-        result = workflow.invoke(initial_state, config=config)
+        from app.dependencies import workflow
+        result = workflow.invoke(initial_state,
+                                 config=config)
         return {"result": result, "conversation_id": conversation_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -29,8 +30,18 @@ async def chat(message: str, conversation_id: Optional[str] = None):
 @router.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
     """Upload a text or PDF document for RAG indexing."""
-    allowed = {".txt", ".pdf", ".md"}
-    # based on uploaded file, index the document into vector store
-    pass
+    documents = load_documents(file)
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=800,
+        chunk_overlap=150
+    )
+
+    chunks = splitter.split_documents(documents)
+    vectorstore.add_documents(chunks)
+    retriever = vectorstore.as_retriever()
+    return {
+        "message": "Document uploaded successfully",
+        "chunks": len(chunks)
+    }
 
 
