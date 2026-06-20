@@ -1,0 +1,38 @@
+Deadline: June 21, 2026
+Task: Build a Context-Aware Conversational Agent with Document Queries & Appointment Booking Integration
+Overview:
+
+You are tasked with developing a context-aware conversational chatbot that can seamlessly:
+Answer user queries from documents.
+
+Book appointments through an interactive conversational form, ensuring input validation (name, phone number, email, and preferred date) and converting natural language date inputs into structured formats (e.g., YYYY-MM-DD).
+The chatbot should integrate tool-agents, including natural language date extraction, validation mechanisms, and session persistence, to allow a smooth user experience across different tasks.
+Detailed Requirements:
+
+Document Query System:
+The chatbot should be capable of answering user queries based on document content.
+Conversational Appointment Booking Form Integration:
+    The chatbot should guide the user through a conversational form for booking appointments. The form will collect the following details:
+    Name: Ensure the name field is non-empty and valid.
+    Phone Number: Validate the phone number format (e.g., check for correct length and numeric format).
+    Email: Validate the email format (e.g., check for a valid email pattern).
+    Preferred Date: Allow users to provide the preferred appointment date using natural language (e.g., "Next Monday," "Coming Tuesday," "in two days").
+    Convert natural language date inputs into structured date format (YYYY-MM-DD) for scheduling.
+    Tool-Agent Integration:
+    The system should integrate tool-agents to handle date extraction, input validation, and other necessary operations.
+    Extract and validate the date from user input in natural language as well. For instance, if the user says "next Monday," the system should correctly identify and convert this to the corresponding date in YYYY-MM-DD format.
+    Use agents or tools to validate email, phone number, and name inputs, prompting the user for corrections as needed.
+
+Context awareness:
+Implement context aware chatbot
+Persist user inputs (name, phone number, email, date) and document information to provide a context-aware experience.
+Context Switching:
+The chatbot must be capable of seamlessly switching between the two contexts: answering document queries and helping users book appointments.
+
+
+Tech Stack & Libraries:
+Backend Framework : FastAPI ( preferable )
+LLM :  Local OLLAMA Model
+Agent Orchestration: Use Langgraph
+Demonstrate the work in the front end using any of your preferred frameworks.
+Note: Also Submit system diagram for the same and a short run/demo video

@@ -7,7 +7,7 @@ from langgraph.constants import START, END
 from langgraph.graph import StateGraph
 from langchain_postgres import PGVector
 from app import dependencies
-from app.agents.node import chat_node
+from app.agents.node import chat_node, classify_intent_node
 from app.config.constants import DB_URI, COLLECTION_NAME
 from app.config.llm import embeddings_llm
 from app.models.schema import ChatState
@@ -25,8 +25,10 @@ async def lifespan(app: FastAPI):
         checkpointer.setup()
 
         graph = StateGraph(ChatState)
+        graph.add_node("classify_intent_node", classify_intent_node)
         graph.add_node('chat_node', chat_node)
-        graph.add_edge(START, 'chat_node')
+        graph.add_edge(START, 'classify_intent_node')
+        graph.add_edge("classify_intent_node", 'chat_node')
         graph.add_edge('chat_node', END)
         dependencies.workflow = graph.compile(checkpointer=checkpointer)
         try:
