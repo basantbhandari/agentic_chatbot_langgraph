@@ -5,15 +5,16 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from uuid import uuid4
-
+from langchain_postgres import PGVector
 from langchain_core.messages import HumanMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.config.constants import (
     TEXT_SPLITTER_CHUNK_SIZE,
     TEXT_SPLITTER_CHUNK_OVERLAP,
-    KNOWLEDGE_DIR,
+    KNOWLEDGE_DIR, COLLECTION_NAME, DB_URI,
 )
+from app.config.llm import embeddings_llm
 from app.utils.helper import load_documents
 
 router = APIRouter()
@@ -107,9 +108,13 @@ async def reset_knowledgebase():
 
     # 2. Reset vector store completely
     try:
-        from app.dependencies import vectorstore
-
-        vectorstore.delete_collection()
+        from app import dependencies
+        dependencies.vectorstore.delete_collection()
+        dependencies.vectorstore = PGVector(
+            connection=DB_URI,
+            embeddings=embeddings_llm,
+            collection_name=COLLECTION_NAME,
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Files deleted but vector reset failed: {str(e)}"
