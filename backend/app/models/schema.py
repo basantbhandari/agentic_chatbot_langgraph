@@ -21,6 +21,10 @@ class AppointmentBooking(BaseModel):
     email: Optional[str] = Field(
         default=None, description="Valid email address following standard email format."
     )
+    preferred_date_text: Optional[str] = Field(
+        default=None,
+        description="The preferred date for this appointment booking in raw natural language text.",
+    )
 
     preferred_date: Optional[str] = Field(
         default=None, description="Preferred appointment date in YYYY-MM-DD format."

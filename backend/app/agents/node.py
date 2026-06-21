@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 from app.config.llm import (
@@ -6,6 +8,7 @@ from app.config.llm import (
     appointment_booking_structure_llm,
 )
 from app.models.schema import ChatState, IntentClassification, AppointmentBooking
+from app.tools.date import resolve_date
 
 
 def handle_intent_classification(state: ChatState):
@@ -79,21 +82,32 @@ def handle_knowledge_base(state: ChatState):
 
 def handle_appointment(state: ChatState):
     """LangGraph node for conversational appointment booking."""
-    system_prompt = """
-    You are an appointment booking assistant.
+    system_prompt = f"""
+    You are an appointment booking assistant. Extract structured fields from user messages.
 
-    Extract appointment details from the Human conversation.
+    Today's date: {datetime.now().strftime("%Y-%m-%d, %A")}
 
-    Fields to extract:
-    - name: user's full name
-    - phone_number: user's phone number
-    - email: user's email address
-    - preferred_date: preferred appointment date (extract the natural language date into yyyy-mm-dd string format based on current date)
+    ## Fields to extract
+    - name: Full name (e.g. "Ramesh", "Hari Rana", "Sita Kumari Thapa")
+    - phone_number: Digits only, no spaces or dashes. Strip leading country code 977 or +977.
+      Examples: "9840601088", "9801234567". Must be 10 digits starting with 98.
+    - email: Standard email format (e.g. "abc@xyz.com")
+    - preferred_date_text: Exact raw text the user said (e.g. "this friday", "tomorrow", "आइतबार")
 
-    Rules:
-    - Do NOT guess missing values
-    - Only extract explicitly mentioned information
-    - If something is missing, leave it empty
+    ## Rules
+    - Return ONLY a valid JSON object, no explanation, no markdown.
+    - Do NOT compute or resolve dates — copy the raw text exactly.
+    - Do NOT guess or infer missing fields — omit them from the JSON.
+    - If a field is not explicitly mentioned, leave it out entirely.
+
+    ## Example
+    User: "My name is Hari Rana, call me on 9840601088, I want an appointment next Monday"
+    Output:
+    {{
+      "name": "Hari Rana",
+      "phone_number": "9840601088",
+      "preferred_date_text": "next Monday"
+    }}
     """
     user_message = state["messages"][-1].content
     result: AppointmentBooking = appointment_booking_structure_llm.invoke(
@@ -102,18 +116,27 @@ def handle_appointment(state: ChatState):
             HumanMessage(content=user_message),
         ]
     )
-    # merge extracted fields safely
+    if "appointment" not in state:
+        state["appointment"] = {}
+
     if result.name:
-        state.get("appointment", {})["name"] = result.name
+        state["appointment"]["name"] = result.name
 
     if result.phone_number:
-        state.get("appointment", {})["phone_number"] = result.phone_number
+        state["appointment"]["phone_number"] = result.phone_number
 
     if result.email:
-        state.get("appointment", {})["email"] = result.email
+        state["appointment"]["email"] = result.email
 
-    if result.preferred_date:
-        state.get("appointment", {})["preferred_date"] = result.preferred_date
+
+
+    if result.preferred_date_text:
+        resolved = resolve_date(result.preferred_date_text)
+        state["appointment"]["preferred_date"] = resolved
+    elif result.preferred_date:
+        # fallback if LLM already gave ISO date
+        state["appointment"]["preferred_date"] = result.preferred_date
+
 
     missing_fields = [
         key
