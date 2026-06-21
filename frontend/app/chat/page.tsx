@@ -171,12 +171,13 @@ export default function ChatPage() {
     if (!confirm('Clear all knowledge base files? This cannot be undone.')) return;
     setClearing(true);
     try {
-      const res = await fetch(`${FASTAPI_BASE}/api/clear`, {
+      const res = await fetch(`${FASTAPI_BASE}/api/reset-knowledgebase`, {
         method: 'DELETE',
         headers: { 'accept': 'application/json' },
       });
       if (!res.ok) throw new Error('Clear failed');
-      showToast('Knowledge base cleared', 'success');
+      const data = await res.json();
+      showToast(data.message || 'Knowledge base cleared', 'success');
     } catch {
       showToast('Failed to clear knowledge base.', 'error');
     } finally {
