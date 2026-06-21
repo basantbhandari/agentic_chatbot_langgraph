@@ -159,6 +159,9 @@ def handle_appointment(state: ChatState):
             "messages": [AIMessage(content=next_question)],
         }
 
+
+    # TODO: here we have successfully collected the information, can call api, store in db,
+    #  whatever be the exact use case we can do
     confirmation = f"""
     Appointment Confirmed!
 
