@@ -9,7 +9,11 @@ from uuid import uuid4
 from langchain_core.messages import HumanMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from app.config.constants import TEXT_SPLITTER_CHUNK_SIZE, TEXT_SPLITTER_CHUNK_OVERLAP, KNOWLEDGE_DIR
+from app.config.constants import (
+    TEXT_SPLITTER_CHUNK_SIZE,
+    TEXT_SPLITTER_CHUNK_OVERLAP,
+    KNOWLEDGE_DIR,
+)
 from app.utils.helper import load_documents
 
 router = APIRouter()
@@ -20,17 +24,14 @@ async def chat(message: str, conversation_id: Optional[str] = None):
     """Main chat endpoint — routes through the LangGraph agent."""
     try:
         conversation_id = conversation_id if conversation_id else uuid4().hex
-        initial_state = {
-            'messages': [HumanMessage(content=message)]
-        }
+        initial_state = {"messages": [HumanMessage(content=message)]}
         config = {"configurable": {"thread_id": conversation_id}}
         from app.dependencies import workflow
-        result = workflow.invoke(initial_state,
-                                 config=config)
+
+        result = workflow.invoke(initial_state, config=config)
         return {"result": result, "conversation_id": conversation_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.post("/upload")
@@ -53,7 +54,9 @@ async def upload_document(file: UploadFile = File(...)):
 
     # restrict file types
     if file_ext not in {".pdf", ".txt", ".md"}:
-        raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_ext}")
+        raise HTTPException(
+            status_code=400, detail=f"Unsupported file type: {file_ext}"
+        )
 
     file_name_no_ext = file_name.stem
 
@@ -75,19 +78,19 @@ async def upload_document(file: UploadFile = File(...)):
 
     # 7. Split into chunks
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=TEXT_SPLITTER_CHUNK_SIZE,
-        chunk_overlap=TEXT_SPLITTER_CHUNK_OVERLAP
+        chunk_size=TEXT_SPLITTER_CHUNK_SIZE, chunk_overlap=TEXT_SPLITTER_CHUNK_OVERLAP
     )
     chunks = splitter.split_documents(documents)
 
     # 8. Store in vector DB
     from app.dependencies import vectorstore
+
     vectorstore.add_documents(chunks)
 
     return {
         "message": "Document uploaded successfully",
         "chunks": len(chunks),
-        "file_path": file_path
+        "file_path": file_path,
     }
 
 
@@ -105,13 +108,11 @@ async def reset_knowledgebase():
     # 2. Reset vector store completely
     try:
         from app.dependencies import vectorstore
+
         vectorstore.delete_collection()
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Files deleted but vector reset failed: {str(e)}"
+            status_code=500, detail=f"Files deleted but vector reset failed: {str(e)}"
         )
 
-    return {
-        "message": "Knowledge base fully reset (files + vectors + collection)"
-    }
+    return {"message": "Knowledge base fully reset (files + vectors + collection)"}

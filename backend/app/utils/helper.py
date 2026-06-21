@@ -1,5 +1,9 @@
 from pathlib import Path
-from langchain_community.document_loaders import PyMuPDFLoader, TextLoader, UnstructuredMarkdownLoader
+from langchain_community.document_loaders import (
+    PyMuPDFLoader,
+    TextLoader,
+    UnstructuredMarkdownLoader,
+)
 
 
 def load_documents(file_path: str):

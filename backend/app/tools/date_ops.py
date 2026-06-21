@@ -2,6 +2,7 @@ from datetime import datetime
 import dateparser
 from langchain.tools import tool
 
+
 @tool
 def parse_date(date_text: str) -> str:
     """Convert natural language dates into YYYY-MM-DD format."""

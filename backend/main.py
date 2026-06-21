@@ -7,8 +7,15 @@ from langgraph.constants import START, END
 from langgraph.graph import StateGraph
 from langchain_postgres import PGVector
 from app import dependencies
-from app.agents.node import handle_intent_classification, handle_knowledge_base, handle_appointment, \
-    handle_casual_conversation, handle_other, handle_low_confidence, route_intent
+from app.agents.node import (
+    handle_intent_classification,
+    handle_knowledge_base,
+    handle_appointment,
+    handle_casual_conversation,
+    handle_other,
+    handle_low_confidence,
+    route_intent,
+)
 from app.config.constants import DB_URI, COLLECTION_NAME
 from app.config.llm import embeddings_llm
 from app.models.schema import ChatState
@@ -18,6 +25,7 @@ from contextlib import asynccontextmanager
 
 checkpointer: Optional[PostgresSaver] = None
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global checkpointer
@@ -25,7 +33,6 @@ async def lifespan(app: FastAPI):
     with PostgresSaver.from_conn_string(DB_URI) as checkpointer:
         checkpointer.setup()
         graph = StateGraph(ChatState)
-
 
         # Register nodes
         graph.add_node("intent_classification", handle_intent_classification)
@@ -56,14 +63,13 @@ async def lifespan(app: FastAPI):
         graph.add_edge("other", END)
         graph.add_edge("low_confidence", END)
 
-
         dependencies.workflow = graph.compile(checkpointer=checkpointer)
 
         try:
             dependencies.vectorstore = PGVector(
                 connection=DB_URI,
                 embeddings=embeddings_llm,
-                collection_name=COLLECTION_NAME
+                collection_name=COLLECTION_NAME,
             )
             dependencies.retriever = dependencies.vectorstore.as_retriever()
             logger.info("Vector DB ready")
@@ -79,7 +85,7 @@ app = FastAPI(
     title="Context-Aware Conversational Agent",
     description="LangGraph-powered chatbot with Document QA and Appointment Booking",
     version="1.0.0",
-    lifespan = lifespan,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -95,9 +101,5 @@ app.include_router(chat_router, prefix="/api", tags=["Chat"])
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )
+
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
