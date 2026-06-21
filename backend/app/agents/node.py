@@ -9,6 +9,7 @@ from app.config.llm import (
 )
 from app.models.schema import ChatState, IntentClassification, AppointmentBooking
 from app.tools.date import resolve_date
+from app.utils.helper import safe_retrieve
 
 
 def handle_intent_classification(state: ChatState):
@@ -45,8 +46,7 @@ def handle_knowledge_base(state: ChatState):
 
     last_user_message = state["messages"][-1].content
     from app.dependencies import retriever
-
-    retrieved_documents = retriever.invoke(last_user_message)
+    retrieved_documents = safe_retrieve(retriever, last_user_message)
     context = (
         "\n\n".join(
             f"[Document {i + 1}]\n{doc.page_content}"
