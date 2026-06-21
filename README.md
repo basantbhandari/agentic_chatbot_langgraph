@@ -6,7 +6,7 @@ A full-stack, context-aware chatbot system built with LangGraph, FastAPI, and Ne
 ## Features
 
 - **Document Query (RAG)** — Upload documents in `.txt`, `.pdf`, or `.md` format and ask questions against them. Responses are generated using retrieval-augmented generation with PGVector for semantic search and Ollama as the local LLM.
-- **Appointment Booking** — A conversational form that collects and validates user details (name, phone, email, preferred date) with natural language date parsing (e.g. "Next Monday" → `YYYY-MM-DD`).
+- **Appointment Booking** — A conversational form that collects and validates user details (name, phone, email, preferred date) with natural language date parsing (e.g. "Monday" → `YYYY-MM-DD`).
 - **Context Switching** — Seamlessly switch between document queries and appointment booking within the same session.
 - **Persistent Memory** — Conversation history is stored in PostgreSQL, enabling context-aware responses across turns.
 - **Local LLM** — Fully local inference using Ollama for both chat and embeddings — no external API calls required.
