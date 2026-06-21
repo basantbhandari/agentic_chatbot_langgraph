@@ -46,6 +46,7 @@ def handle_knowledge_base(state: ChatState):
 
     last_user_message = state["messages"][-1].content
     from app.dependencies import retriever
+
     retrieved_documents = safe_retrieve(retriever, last_user_message)
     context = (
         "\n\n".join(
@@ -158,7 +159,6 @@ def handle_appointment(state: ChatState):
             "response": next_question,
             "messages": [AIMessage(content=next_question)],
         }
-
 
     # TODO: here we have successfully collected the information, can call api, store in db,
     #  whatever be the exact use case we can do

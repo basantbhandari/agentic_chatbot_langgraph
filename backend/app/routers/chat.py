@@ -12,7 +12,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.config.constants import (
     TEXT_SPLITTER_CHUNK_SIZE,
     TEXT_SPLITTER_CHUNK_OVERLAP,
-    KNOWLEDGE_DIR, COLLECTION_NAME, DB_URI,
+    KNOWLEDGE_DIR,
+    COLLECTION_NAME,
+    DB_URI,
 )
 from app.config.llm import embeddings_llm
 from app.utils.helper import load_documents
@@ -109,6 +111,7 @@ async def reset_knowledgebase():
     # 2. Reset vector store completely
     try:
         from app import dependencies
+
         dependencies.vectorstore.delete_collection()
         dependencies.vectorstore = PGVector(
             connection=DB_URI,
