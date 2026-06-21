@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
@@ -128,15 +128,12 @@ def handle_appointment(state: ChatState):
     if result.email:
         state["appointment"]["email"] = result.email
 
-
-
     if result.preferred_date_text:
         resolved = resolve_date(result.preferred_date_text)
         state["appointment"]["preferred_date"] = resolved
     elif result.preferred_date:
         # fallback if LLM already gave ISO date
         state["appointment"]["preferred_date"] = result.preferred_date
-
 
     missing_fields = [
         key
