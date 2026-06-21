@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 const FASTAPI_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 type Message = { role: 'user' | 'assistant'; content: string };
-type Chat = { id: string; title: string; messages: Message[] };
+type Chat = { id: string; title: string; messages: Message[]; conversationId: string };
 
 function BotIcon() {
   return (
@@ -74,7 +74,7 @@ function ChatIcon() {
 
 export default function ChatPage() {
   const [chats, setChats] = useState<Chat[]>([
-    { id: '1', title: 'New conversation', messages: [] }
+    { id: '1', title: 'New conversation', messages: [], conversationId: '' }
   ]);
   const [activeChatId, setActiveChatId] = useState('1');
   const [input, setInput] = useState('');
@@ -107,7 +107,7 @@ export default function ChatPage() {
 
   function newChat() {
     const id = Date.now().toString();
-    setChats(prev => [{ id, title: 'New conversation', messages: [] }, ...prev]);
+    setChats(prev => [{ id, title: 'New conversation', messages: [], conversationId: '' }, ...prev]);
     setActiveChatId(id);
     setInput('');
   }
@@ -126,16 +126,22 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${FASTAPI_BASE}/api/chat`, {
+      const conversationId = activeChat.conversationId;
+      const params = new URLSearchParams({ message: input.trim() });
+      if (conversationId) params.append('conversation_id', conversationId);
+      const res = await fetch(`${FASTAPI_BASE}/api/chat?${params.toString()}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: updatedMessages }),
+        headers: { 'accept': 'application/json' },
+        body: '',
       });
       if (!res.ok) throw new Error('Failed');
       const data = await res.json();
-      const assistantMsg: Message = { role: 'assistant', content: data.reply || data.message || data.content };
+      const reply = data.result?.response || data.result?.messages?.findLast((m: {type: string; content: string}) => m.type === 'ai')?.content || '';
+      const assistantMsg: Message = { role: 'assistant', content: reply };
       setChats(prev => prev.map(c => c.id === activeChatId ? {
-        ...c, messages: [...updatedMessages, assistantMsg]
+        ...c,
+        conversationId: data.conversation_id || c.conversationId,
+        messages: [...updatedMessages, assistantMsg]
       } : c));
     } catch {
       showToast('Failed to send message. Is the backend running?', 'error');
